@@ -20,8 +20,8 @@ Follow these steps on **both computers**.
 
 ### 1. Clone the Repository and Navigate to the Folder
 ```bash
-git clone https://github.com
-cd TODO
+git clone https://github.com/yablonsk11/Super_b2b_saas_ai.git
+cd Super_b2b_saas_ai
 ```
 
 ### 2. Create and Activate a Virtual Environment (`venv`)
@@ -50,15 +50,15 @@ pip install -r requirements.txt
 
 ## ⚙️ Configuration & Running
 
-### Step 1. Configure the Server (PC 2)
+### Step 1. Configure the Server (PC 1)
 1. Place your image files (e.g., `image1.png` and `image2.png`) into the same folder as the `receiver.py` script.
 2. Find the local IP address of this computer (type `ipconfig` in the Windows command prompt or `ifconfig` in macOS/Linux terminals). For example, let's assume it is `192.168.1.50`.
 3. Launch the server application:
    ```bash
-   python receiver.py
+   python server.py
    ```
 
-### Step 2. Configure the Client (PC 1)
+### Step 2. Configure the Client (PC 2)
 1. Open the `sender.py` file in a text editor or IDE.
 2. Locate the `TARGET_IP` variable at the top of the file and replace it with the Server PC's actual IP address:
    ```python
@@ -66,16 +66,7 @@ pip install -r requirements.txt
    ```
 3. Launch the client application:
    ```bash
-   python sender.py
+   python client.py
    ```
 
-Now, clicking the "Сменить картинку" (Change Image) button on the first computer will instantly rotate the images on the second one.
-
----
-
-## ⚠️ Troubleshooting
-
-* **Image is not changing?** Make sure both computers are connected to the **same Wi-Fi network** or router.
-* **Signal still not going through?** The firewall on the Server PC might be blocking incoming traffic. Try temporarily disabling it or add port `5005` (UDP) to your firewall's inbound rules/exceptions.
-* **"File not found" Error?** Ensure that the file names in the `receiver.py` image array (`self.images`) exactly match the actual files located in the project directory.
-
+Now, clicking the "Change Image" button on the first computer will instantly rotate the images on the second one.
