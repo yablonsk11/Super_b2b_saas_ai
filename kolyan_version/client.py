@@ -1,4 +1,5 @@
 import socket
+import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 TARGET_IP = "192.168.1.50"
