@@ -55,7 +55,6 @@ class ClientApp(QMainWindow):
 				)
 
     def change_image(self):
-        # Меняем индекс картинки по кругу
         self.current_index = (self.current_index + 1) % len(self.images)
         self.update_image()
         print("the image has been successfuly changed based on a signal")
