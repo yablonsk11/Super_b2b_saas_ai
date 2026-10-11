@@ -1,37 +1,45 @@
-import socket
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtNetwork import QUdpSocket, QHostAddress
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton
 
-TARGET_IP = "192.168.1.50"
+# window configiration
+WINDOW_TITLE = "client"
+WIDTH = 300
+HEIGHT = 150
+
+# interface
+BUTTON_TEXT = "change the image"
+
+# network
+TARGET_IP = "127.0.0.1"
 TARGET_PORT = 5005
+DATAGRAM_PAYLOAD = b"change"
+ERROR_CODE = -1
+
+# logging
+LOG_SUCCESS = f"signal successfuly sent {TARGET_IP}:{TARGET_PORT}"
+LOG_ERROR = "sending error"
 
 
 class ClientApp(QMainWindow):
-
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("client")
-        self.resize(300, 150)
+        self.setWindowTitle(WINDOW_TITLE)
+        self.resize(WIDTH, HEIGHT)
 
-        self.button = QPushButton("change the image", self)
-        self.button.clicked.connect(self.send_signal)
+        btn = QPushButton(BUTTON_TEXT, self)
+        btn.clicked.connect(self.send_signal)
+        self.setCentralWidget(btn)
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.button)
-
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
-
-        # init udp socket
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock = QUdpSocket(self)
 
     def send_signal(self):
-        try:
-            self.sock.sendto(b"change", (TARGET_IP, TARGET_PORT))
-            print(f"signal successfuly sent {TARGET_IP}:{TARGET_PORT}")
-        except Exception as e:
-            print(f"sending error: {e}")
+        status = self.sock.writeDatagram(DATAGRAM_PAYLOAD, QHostAddress(TARGET_IP), TARGET_PORT)
+        
+        if status != ERROR_CODE:
+            print(LOG_SUCCESS)
+        else:
+            print(LOG_ERROR)
 
 
 if __name__ == "__main__":
