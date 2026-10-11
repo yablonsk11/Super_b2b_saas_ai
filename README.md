@@ -59,7 +59,7 @@ pip install -r requirements.txt
    ```
 
 ### Step 2. Configure the Client (PC 2)
-1. Open the `sender.py` file in a text editor or IDE.
+1. Open the `client.py` file in a text editor or IDE.
 2. Locate the `TARGET_IP` variable at the top of the file and replace it with the Server PC's actual IP address:
    ```python
    TARGET_IP = "192.168.1.50"  # Replace with your Server's actual local IP
