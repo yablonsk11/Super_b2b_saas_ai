@@ -3,11 +3,31 @@ import threading
 import tkinter as tk
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-
 from PIL import Image, ImageTk
+import json
+import sys
 
-HOST, PORT = "0.0.0.0", 8000         
-IMAGES_DIR = Path(__file__).parent / "images" #Название папки с картинками
+BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
+CONFIG_PATH = BASE / "config.json"
+
+
+def load_config():
+    if not CONFIG_PATH.exists():
+        CONFIG_PATH.write_text(json.dumps(DEFAULTS, indent=2, ensure_ascii=False), encoding="utf-8")
+        return dict(DEFAULTS)
+    try:
+        return {**DEFAULTS, **json.loads(CONFIG_PATH.read_text(encoding="utf-8"))}
+    except (json.JSONDecodeError, OSError):
+        return dict(DEFAULTS)
+
+DEFAULTS = {"host": "0.0.0.0", "port": 8000, "images_dir": "images"}
+
+cfg = load_config()
+HOST, PORT = cfg["host"], cfg["port"]
+
+images = Path(cfg["images_dir"])
+IMAGES_DIR = images if images.is_absolute() else BASE / images
+
 EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".bmp"} #Поддерживаемые расширения файлов
 
 events = queue.Queue()                 

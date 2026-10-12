@@ -3,9 +3,30 @@ from tkinter import ttk
 import requests
 import threading
 import queue
+import json
+import sys
+from pathlib import Path
 
-SERVER_URL = "http://127.0.0.1:8000/switch" #Адресс сервера
-PING_URL = "http://127.0.0.1:8000/ping"
+BASE = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
+CONFIG_PATH = BASE / "config.json"
+
+DEFAULTS = {"host": "127.0.0.1", "port": 8000}
+
+
+def load_config():
+    if not CONFIG_PATH.exists():
+        CONFIG_PATH.write_text(json.dumps(DEFAULTS, indent=2, ensure_ascii=False), encoding="utf-8")
+        return dict(DEFAULTS)
+    try:
+        return {**DEFAULTS, **json.loads(CONFIG_PATH.read_text(encoding="utf-8"))}
+    except (json.JSONDecodeError, OSError):
+        return dict(DEFAULTS)
+
+cfg = load_config()
+BASE_URL = f"http://{cfg['host']}:{cfg['port']}"
+SERVER_URL = f"{BASE_URL}/switch"
+PING_URL = f"{BASE_URL}/ping"
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
