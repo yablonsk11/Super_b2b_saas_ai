@@ -1,72 +1,111 @@
-# 🎛️ Remote Image Changer
+# Jarvis — Voice Assistant
 
-A simple client-server system built with Python for remote UI control over a local network. When you click the button in the application on **PC 1 (Client)**, the image in the application on **PC 2 (Server)** changes instantly.
+Голосовой помощник для управления музыкой с помощью естественных голосовых команд.
 
-The project uses the **PyQt6** library for the graphical user interface and network **UDP sockets** for low-latency signal transmission without the need to deploy complex web servers.
+Jarvis распознаёт речь, интерпретирует команды с помощью GigaChat и взаимодействует с сервером по локальной сети. Приложение разрабатывается как самостоятельный исполняемый файл, не требующий от пользователя установки Python и дополнительных библиотек.
 
----
+## Возможности
 
-## 🚀 Architecture
+- **Голосовое управление** — управление воспроизведением с помощью естественных голосовых команд.
+- **Распознавание речи** — локальная обработка аудио с помощью Vosk.
+- **Интеллектуальная интерпретация** — обработка команд с помощью GigaChat API.
+- **Автоматическое обнаружение сервера** — поиск сервера в локальной сети без ручного ввода IP-адреса.
+- **Графический интерфейс** — отображение состояния подключения и работы приложения.
+- **Фоновая обработка** — сетевые операции выполняются без блокировки интерфейса.
+- **Готовая сборка** — необходимые библиотеки и модель распознавания речи включены в приложение.
 
-The project is split into two independent applications:
-1. **Control Panel (`client.py`)** — runs on the client PC. Contains a single button to send the trigger command.
-2. **Image Viewer (`server.py`)** — runs on the server PC. Listens to the network in a background thread and cyclically switches images upon receiving the signal.
+## Как это работает
 
----
+1. Пользователь запускает приложение.
+2. При первом запуске вводит ключ GigaChat, если он ещё не настроен.
+3. Приложение ищет сервер в локальной сети.
+4. После подключения пользователь произносит команду.
+5. Jarvis распознаёт речь и определяет намерение пользователя.
+6. Клиент отправляет структурированную команду серверу.
+7. Сервер выполняет действие и возвращает результат.
 
-## 🛠️ Installation & Setup
+## Примеры команд
 
-Follow these steps on **both computers**.
+- «Следующий трек».
+- «Предыдущий трек».
+- «Поставь музыку на паузу».
+- «Продолжи воспроизведение».
+- «Установи громкость на 50 процентов».
+- «Включи Radiohead».
 
-### 1. Clone the Repository and Navigate to the Folder
-```bash
-git clone https://github.com/yablonsk11/Super_b2b_saas_ai.git
-cd Super_b2b_saas_ai
-```
+Поддерживаемые команды зависят от реализации клиентской и серверной частей.
 
-### 2. Create and Activate a Virtual Environment (`venv`)
+## Архитектура
 
-* **Windows:**
-  ```bash
-  python -m venv .venv
-  # Activate in CMD:
-  .venv\Scripts\activate
-  # Or activate in PowerShell:
-  .venv\Scripts\Activate.ps1
-  ```
-* **macOS / Linux:**
-  ```bash
-  python3 -m venv .venv
-  source .venv/bin/activate
-  ```
+Клиентская часть включает следующие компоненты:
 
-### 3. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-*(Alternatively, install manually using: `pip install PyQt6`)*
+| Компонент | Назначение |
+|---|---|
+| `SpeechRecognizer` | Захват аудио и распознавание речи |
+| `CommandParser` | Интерпретация команд |
+| `ServerAutodetection` | Обнаружение сервера через UDP |
+| `BackendClient` | Отправка HTTP-запросов |
+| `VoiceAssistant` | Координация компонентов |
+| `GUI` | Пользовательский интерфейс на PyQt |
+| `Config` | Управление настройками приложения |
 
----
+Серверная часть разрабатывается отдельно и отвечает за обработку команд и взаимодействие с сервисами воспроизведения музыки.
 
-## ⚙️ Configuration & Running
+## Технологии
 
-### Step 1. Configure the Server (PC 1)
-1. Place your image files (e.g., `image1.png` and `image2.png`) into the same folder as the `receiver.py` script.
-2. Find the local IP address of this computer (type `ipconfig` in the Windows command prompt or `ifconfig` in macOS/Linux terminals). For example, let's assume it is `192.168.1.50`.
-3. Launch the server application:
-   ```bash
-   python server.py
-   ```
+- Python
+- PyQt
+- Vosk
+- GigaChat API
+- Socket / UDP
+- Requests / HTTP
+- python-dotenv
+- uv
 
-### Step 2. Configure the Client (PC 2)
-1. Open the `sender.py` file in a text editor or IDE.
-2. Locate the `TARGET_IP` variable at the top of the file and replace it with the Server PC's actual IP address:
-   ```python
-   TARGET_IP = "192.168.1.50"  # Replace with your Server's actual local IP
-   ```
-3. Launch the client application:
-   ```bash
-   python client.py
-   ```
+## Установка и запуск
 
-Now, clicking the "Change Image" button on the first computer will instantly rotate the images on the second one.
+### Для пользователей
+
+1. Скачайте готовую сборку приложения для своей операционной системы из раздела Releases.
+2. Запустите исполняемый файл.
+3. При первом запуске введите ключ GigaChat, если приложение его запрашивает.
+4. Дождитесь обнаружения сервера.
+5. Начните пользоваться голосовым управлением.
+
+**Устанавливать Python, библиотеки, uv или модель Vosk отдельно не требуется.** Необходимые компоненты включены в сборку приложения.
+
+Для работы необходимы подключение к интернету для взаимодействия с GigaChat API и доступный сервер в локальной сети.
+
+### Настройка ключа GigaChat
+
+При первом запуске приложение предложит ввести ключ GigaChat, если он ещё не сохранён. После сохранения ключ будет использоваться автоматически при последующих запусках.
+
+Ключ принадлежит пользователю и не должен включаться в исполняемый файл или публиковаться в репозитории.
+
+## Безопасность
+
+- Учётные данные GigaChat хранятся в пользовательской конфигурации.
+- Секретные ключи не включаются в публичные сборки.
+- Обнаружение сервера выполняется в локальной сети.
+- Работа приложения зависит от доступности GigaChat API и серверной части.
+
+## Статус разработки
+
+Проект находится в разработке.
+
+- [ ] Завершить распознавание голосовых команд.
+- [ ] Интегрировать обработку команд через GigaChat.
+- [ ] Завершить автоматическое обнаружение сервера.
+- [ ] Интегрировать клиент с серверной частью.
+- [ ] Разработать графический интерфейс на PyQt.
+- [ ] Реализовать сохранение и проверку ключа GigaChat.
+- [ ] Подготовить автономную исполняемую сборку.
+- [ ] Протестировать приложение на целевых операционных системах.
+
+## Авторы
+
+Проект разрабатывается совместно.
+
+**Клиентская часть:** распознавание речи, интерпретация команд, обнаружение сервера, сетевое взаимодействие и графический интерфейс.
+
+**Серверная часть:** обработка команд и интеграция с сервисами воспроизведения музыки.
