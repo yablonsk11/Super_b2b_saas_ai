@@ -7,18 +7,11 @@ authors = [
     { name = "yabl0ko", email = "yablochn1k@mail.ru" }
 ]
 requires-python = ">=3.14"
-dependencies = [
-    "gigachat>=0.2.3",
-    "pyqt6>=6.11.0",
-    "python-dotenv>=1.2.4",
-    "requests>=2.34.2",
-    "sounddevice>=0.5.6",
-    "vosk>=0.3.45",
-]
+dependencies = []
 
 [project.scripts]
 client = "client:main"
 
 [build-system]
-requires = ["uv_build>=0.12.18,<0.13.0"]
+requires = ["uv_build>=0.13.1,<0.14.0"]
 build-backend = "uv_build"
