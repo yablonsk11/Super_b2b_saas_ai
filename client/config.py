@@ -12,7 +12,7 @@ DEFAULT_SERVER_PORT = 8000
 
 DISCOVERY_TIMEOUT = 3
 
-DEMO_MODE = True
+DEMO_MODE = False
 
 RULES = {
     "следующ": {"action": "next"},

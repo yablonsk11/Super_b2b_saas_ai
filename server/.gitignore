@@ -1,0 +1,8 @@
+.env
+callback_server.py
+get_refresh_token.py
+get_refresh_token_ngrok.py
+__pycache__/
+build/
+dist/
+*.spec
