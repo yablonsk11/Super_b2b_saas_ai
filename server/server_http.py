@@ -5,7 +5,8 @@ from server_spotify import SpotifyController, SpotifyError
 
 
 class CommandHandler(BaseHTTPRequestHandler):
-    controller: SpotifyController = None   # устанавливается из server_app
+    controller: SpotifyController = None          # устанавливается из контроллера
+    on_event = None                               # callback(command, ok, message)
 
     def do_POST(self):
         if self.path != "/command":
@@ -17,21 +18,33 @@ class CommandHandler(BaseHTTPRequestHandler):
         try:
             command = json.loads(raw)
         except json.JSONDecodeError:
+            self._emit(command=None, ok=False, message="Invalid JSON")
             self._send_json(400, {"error": "Invalid JSON"})
             return
 
         action = command.get("action")
         if not action or action == "none":
+            self._emit(command=command, ok=False, message="Invalid action")
             self._send_json(400, {"error": "Invalid action"})
             return
 
         try:
             result = self.controller.execute(command)
             self._send_json(200, {"status": "ok", "result": result})
+            self._emit(command=command, ok=True, message="OK")
         except SpotifyError as e:
             self._send_json(500, {"error": str(e)})
+            self._emit(command=command, ok=False, message=str(e))
         except Exception as e:
             self._send_json(500, {"error": f"Internal error: {e}"})
+            self._emit(command=command, ok=False, message=f"Internal error: {e}")
+
+    def _emit(self, command, ok, message):
+        if self.on_event:
+            try:
+                self.on_event(command, ok, message)
+            except Exception:
+                pass
 
     def _send_json(self, code: int, payload: dict):
         body = json.dumps(payload, ensure_ascii=False).encode()

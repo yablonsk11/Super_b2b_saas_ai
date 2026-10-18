@@ -47,6 +47,10 @@ class SpotifyController:
         if not self._access_token or time.time() >= self._expires_at:
             self._refresh_access_token()
 
+    def check(self):
+        """Проверка авторизации при старте сервера. Бросает SpotifyError."""
+        self._refresh_access_token()
+
     # ---------- низкоуровневый запрос ----------
 
     def _api(self, method, endpoint, **kwargs):
@@ -56,12 +60,12 @@ class SpotifyController:
         headers["Authorization"] = f"Bearer {self._access_token}"
         r = self._session.request(method, url, headers=headers, timeout=10, **kwargs)
 
-        if r.status_code == 401:          # токен мог протухнуть раньше времени
+        if r.status_code == 401:
             self._refresh_access_token()
             headers["Authorization"] = f"Bearer {self._access_token}"
             r = self._session.request(method, url, headers=headers, timeout=10, **kwargs)
 
-        if r.status_code == 204:          # No Content — успех для команд управления
+        if r.status_code == 204:
             return None
         if r.status_code >= 400:
             raise SpotifyError(f"Spotify API {r.status_code}: {r.text}")
@@ -72,7 +76,6 @@ class SpotifyController:
     # ---------- выполнение команд ----------
 
     def execute(self, command: dict):
-        """Диспетчеризация по action. Возвращает результат или None."""
         action = command.get("action")
         if action == "play":
             return self._play(query=command.get("query"))
@@ -103,10 +106,8 @@ class SpotifyController:
 
     def _play(self, query: str | None = None):
         if not query:
-            # просто продолжить / запустить последнее
             return self._api("PUT", "/me/player/play")
 
-        # 1) пробуем найти трек
         search = self._api(
             "GET",
             "/search",
@@ -117,7 +118,6 @@ class SpotifyController:
             uri = tracks[0]["uri"]
             return self._api("PUT", "/me/player/play", json={"uris": [uri]})
 
-        # 2) если трек не найден — пробуем артиста
         search = self._api(
             "GET",
             "/search",

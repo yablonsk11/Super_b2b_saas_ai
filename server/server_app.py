@@ -1,33 +1,12 @@
-import threading
-from http.server import ThreadingHTTPServer
+import sys
 
-from server_config import DEFAULT_SERVER_PORT
-from server_http import CommandHandler
-from server_spotify import SpotifyController
-from server_discovery import DiscoveryResponder
+from PyQt6.QtWidgets import QApplication
 
-
-def main():
-    controller = SpotifyController()
-    CommandHandler.controller = controller
-
-    http_server = ThreadingHTTPServer(("0.0.0.0", DEFAULT_SERVER_PORT), CommandHandler)
-    http_thread = threading.Thread(target=http_server.serve_forever, daemon=True)
-    http_thread.start()
-    print(f"[HTTP] Сервер слушает :{DEFAULT_SERVER_PORT}")
-
-    discovery = DiscoveryResponder()
-    discovery.start()
-
-    try:
-        http_thread.join()
-    except KeyboardInterrupt:
-        print("\n[Server] Остановка…")
-    finally:
-        discovery.stop()
-        http_server.shutdown()
-        http_server.server_close()
+import server_interface
 
 
 if __name__ == "__main__":
-    main()
+    app = QApplication(sys.argv)
+    window = server_interface.ServerWindow()
+    window.show()
+    sys.exit(app.exec())
