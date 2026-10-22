@@ -293,6 +293,7 @@ class JarvisWindow(QMainWindow):
         self.processor = client_voice_recognizer.CommandProcessor()
         self.sender = client_connection.RequestSender(on_error=b.error.emit,
                                     on_result=lambda c, s: b.sent.emit(c, s))
+        self.tts = client_voice_recognizer.TTSPlayer(on_speaking=self._on_tts_speaking)
         self.pool = ThreadPoolExecutor(max_workers=1)   # разбор команд по порядку
 
         if DEMO_MODE:
@@ -382,31 +383,47 @@ class JarvisWindow(QMainWindow):
         self.circle.set_color(IDLE)
         self._set_status(self.IDLE_TEXT, MUTED)
 
+    def _on_tts_speaking(self, active: bool):
+        """Глушим микрофон на время озвучки, чтобы не ловить эхо."""
+        if self.listener:
+            self.listener.set_muted(bool(active))
+
     def on_heard(self, text):
         self._listening = False
         self.circle.set_active(False)
         self.circle.set_color(IDLE)
         self._set_status("Хорошо, босс", GREEN)
         self._reset_timer.start(2500)
+        print(f"[APP] on_heard: {text!r}")
         self.add_log(f"Услышал: «{text}»")
         self.pool.submit(self._process, text)
 
     def _process(self, text):
-        """Выполняется в отдельном потоке: GigaChat может отвечать секунды."""
+        """Разбор → озвучка → отправка. GigaChat может отвечать секунды."""
+        print(f"[APP] _process start: {text!r}")
         try:
             command = self.processor.process(text)
+            print(f"[APP] command parsed: {command!r}")
         except Exception as e:
+            print(f"[APP] command parse exception: {e}")
             self.bridge.error.emit(f"Ошибка разбора команды: {e}")
-            return
+            command = {"action": "none"}
+
+        speech = self.processor.generate_response_text(command, original_text=text)
+        print(f"[APP] speech text: {speech!r}")
+        self.tts.clear()
+        self.tts.speak(speech)
         self.bridge.parsed.emit(command)
-        self.sender.send(command)
+        if command.get("action") != "none":
+            self.sender.send(command)
 
     def on_parsed(self, command):
         if command.get("action") == "none":
             self.add_log("Команда не распознана", MUTED)
             self._set_status("Не понял, босс", MUTED)
-        else:
-            self.add_log(f"Команда: {json.dumps(command, ensure_ascii=False)}", BLUE)
+            return
+
+        self.add_log(f"Команда: {json.dumps(command, ensure_ascii=False)}", BLUE)
 
     def on_sent(self, command, status):
         color = GREEN if status < 400 else RED

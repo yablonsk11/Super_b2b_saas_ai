@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+**/.venv/
+**/__pycache__/
+
+# IDE / editor
+.vscode/
+.idea/
+
+# Secrets and local env
+.env
+.env.*
+!.env.example
+
+# Build / runtime artifacts
+build/
+dist/
+*.spec
+*.egg-info/
+*.wav
+*.mp3
+*.aac
+*.flac
+*.zip
+*.onnx
+*.onnx.json
+*.bin
+*.dat
+
+# Project outputs
+client/build/
+client/dist/
+client/jarvis_client
+client/jarvis_client.spec
+server/build/
+server/dist/
+server/jarvis_server
+server/jarvis_server.spec
+
+# Large local data and assets
+client/models/*
+!client/models/.gitkeep
+client/assets/
+server/assets/
+
+# OS files
+.DS_Store
+Thumbs.db
