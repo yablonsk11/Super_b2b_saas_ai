@@ -160,6 +160,7 @@ _LATIN_RE = re.compile(r"[a-z]", re.IGNORECASE)
 _DROP_LEADING = frozenset({
     # wake
     "джарвис", "жарвис", "джарвиз", "жарвиз", "jarvis", "jarviss", "jervis",
+    "вась", "вася", "васян", "васянь", "васень", "васик", "васюк",
     # play / mishears
     "включи", "вруби", "поставь", "запусти", "открой",
     "play", "start", "launch", "include", "inch", "which",
