@@ -24,10 +24,11 @@ def get_local_ip() -> str:
 class ServerController:
     """Управляет запуском и остановкой HTTP-сервера и UDP-discovery."""
 
-    def __init__(self, on_log=None, on_event=None, on_error=None):
+    def __init__(self, on_log=None, on_event=None, on_error=None, on_command_start=None):
         self.on_log = on_log or (lambda msg, color: None)
         self.on_event = on_event or (lambda cmd, ok, msg: None)
         self.on_error = on_error or (lambda msg: None)
+        self.on_command_start = on_command_start or (lambda cmd: None)
 
         self.spotify = None
         self.http_server = None
@@ -59,6 +60,7 @@ class ServerController:
         # 2. HTTP-сервер
         CommandHandler.controller = self.spotify
         CommandHandler.on_event = self.on_event
+        CommandHandler.on_command_start = self.on_command_start
 
         try:
             self.http_server = ThreadingHTTPServer(
@@ -100,3 +102,4 @@ class ServerController:
 
         CommandHandler.controller = None
         CommandHandler.on_event = None
+        CommandHandler.on_command_start = None

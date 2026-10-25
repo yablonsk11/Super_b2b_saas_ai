@@ -53,6 +53,7 @@ class Bridge(QObject):
     log = pyqtSignal(str, str)        # текст, цвет
     state = pyqtSignal(str)           # "idle" | "starting" | "running" | "error"
     event = pyqtSignal(object, bool, str)   # команда, успех, сообщение
+    command_start = pyqtSignal(object)      # команда принята в выполнение
     error = pyqtSignal(str)
 
 
@@ -134,10 +135,16 @@ class ServerWindow(QMainWindow):
 
     IDLE_TEXT = "Сервер остановлен"
 
+    CMD_STYLE = (
+        "background: {bg}; color: {fg}; "
+        "border: 1px solid {border}; border-radius: 10px; "
+        "padding: 10px 14px; font-size: 13px;"
+    )
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Jarvis Server")
-        self.resize(520, 700)
+        self.resize(520, 760)
         self.setStyleSheet(STYLE)
 
         central = QWidget()
@@ -164,6 +171,13 @@ class ServerWindow(QMainWindow):
         self.address.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         lay.addWidget(self.address)
 
+        self.current_cmd = QLabel("")
+        self.current_cmd.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.current_cmd.setWordWrap(True)
+        self.current_cmd.setMinimumHeight(52)
+        self._set_cmd_idle()
+        lay.addWidget(self.current_cmd)
+
         self.button = QPushButton("Запустить сервер")
         self.button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.button.setStyleSheet(START_BTN)
@@ -172,7 +186,7 @@ class ServerWindow(QMainWindow):
 
         self.log = QTextEdit()
         self.log.setReadOnly(True)
-        self.log.setFixedHeight(200)
+        self.log.setFixedHeight(180)
         lay.addWidget(self.log)
 
         # --- логика ---
@@ -180,11 +194,13 @@ class ServerWindow(QMainWindow):
         b.log.connect(self.add_log)
         b.state.connect(self._on_state)
         b.event.connect(self._on_event)
+        b.command_start.connect(self._on_command_start)
         b.error.connect(lambda m: self.add_log(m, RED))
 
         self.controller = ServerController(
             on_log=b.log.emit,
             on_event=lambda c, ok, m: b.event.emit(c, ok, m),
+            on_command_start=lambda c: b.command_start.emit(c),
             on_error=b.error.emit,
         )
         self._busy = False
@@ -204,6 +220,35 @@ class ServerWindow(QMainWindow):
         self.status.setText(text)
         self.status.setStyleSheet(f"color: {color}; font-size: 17px;")
 
+    # ---------- панель текущей команды ----------
+
+    def _set_cmd_idle(self):
+        self.current_cmd.setText("Ожидание команд")
+        self.current_cmd.setStyleSheet(self.CMD_STYLE.format(
+            bg=PANEL, fg=MUTED, border="#1b2230"
+        ))
+
+    @staticmethod
+    def _format_command(command) -> str:
+        if not isinstance(command, dict):
+            return str(command)
+        action = command.get("action") or "?"
+        parts = [action]
+        query = command.get("query")
+        if query:
+            parts.append(f"«{query}»")
+        value = command.get("value")
+        if value is not None:
+            parts.append(str(value))
+        return " ".join(parts)
+
+    def _on_command_start(self, command):
+        text = self._format_command(command)
+        self.current_cmd.setText(f"▶ Выполняется: {text}")
+        self.current_cmd.setStyleSheet(self.CMD_STYLE.format(
+            bg=PANEL, fg=BLUE, border=BLUE
+        ))
+
     # ---------- состояния ----------
 
     def _on_state(self, state):
@@ -217,6 +262,7 @@ class ServerWindow(QMainWindow):
             self.circle.set_active(False)
             self._set_status("Запуск…", BLUE)
             self.address.setText("")
+            self._set_cmd_idle()
 
         elif state == "running":
             self.button.setEnabled(True)
@@ -228,6 +274,7 @@ class ServerWindow(QMainWindow):
             self.circle.set_level(0.6)
             self._set_status("Работает", GREEN)
             self.address.setText(f"▶ {self.controller.address}")
+            self._set_cmd_idle()
 
         elif state == "error":
             self.button.setEnabled(True)
@@ -239,6 +286,7 @@ class ServerWindow(QMainWindow):
             self.circle.set_level(0.3)
             self._set_status("Ошибка запуска", RED)
             self.address.setText("")
+            self._set_cmd_idle()
 
         else:  # idle
             self.button.setEnabled(True)
@@ -249,6 +297,7 @@ class ServerWindow(QMainWindow):
             self.circle.set_active(False)
             self._set_status(self.IDLE_TEXT, MUTED)
             self.address.setText("")
+            self._set_cmd_idle()
 
     # ---------- управление ----------
 
@@ -297,7 +346,24 @@ class ServerWindow(QMainWindow):
     def _on_event(self, command, ok, message):
         if not isinstance(command, dict):
             self.add_log(f"Некорректный запрос: {message}", RED)
+            self.current_cmd.setText(f"✗ Ошибка: {message}")
+            self.current_cmd.setStyleSheet(self.CMD_STYLE.format(
+                bg=PANEL, fg=RED, border=RED
+            ))
             return
+
+        text = self._format_command(command)
+        if ok:
+            self.current_cmd.setText(f"✓ {text}")
+            self.current_cmd.setStyleSheet(self.CMD_STYLE.format(
+                bg=PANEL, fg=GREEN, border=GREEN
+            ))
+        else:
+            self.current_cmd.setText(f"✗ {text} — {message}")
+            self.current_cmd.setStyleSheet(self.CMD_STYLE.format(
+                bg=PANEL, fg=RED, border=RED
+            ))
+
         action = command.get("action", "?")
         color = GREEN if ok else RED
         self.add_log(

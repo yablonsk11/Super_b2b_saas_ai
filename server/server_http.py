@@ -2,11 +2,10 @@ import json
 from http.server import BaseHTTPRequestHandler
 
 from server_spotify import SpotifyController, SpotifyError
-
-
 class CommandHandler(BaseHTTPRequestHandler):
-    controller: SpotifyController = None          # устанавливается из контроллера
-    on_event = None                               # callback(command, ok, message)
+    controller: SpotifyController = None
+    on_event = None            # callback(command, ok, message) — после
+    on_command_start = None    # callback(command)           — до   ← NEW
 
     def do_POST(self):
         if self.path != "/command":
@@ -28,6 +27,8 @@ class CommandHandler(BaseHTTPRequestHandler):
             self._send_json(400, {"error": "Invalid action"})
             return
 
+        self._emit_start(command)          # ← NEW
+
         try:
             result = self.controller.execute(command)
             self._send_json(200, {"status": "ok", "result": result})
@@ -38,6 +39,13 @@ class CommandHandler(BaseHTTPRequestHandler):
         except Exception as e:
             self._send_json(500, {"error": f"Internal error: {e}"})
             self._emit(command=command, ok=False, message=f"Internal error: {e}")
+
+    def _emit_start(self, command):
+        if self.on_command_start:
+            try:
+                self.on_command_start(command)
+            except Exception:
+                pass
 
     def _emit(self, command, ok, message):
         if self.on_event:
